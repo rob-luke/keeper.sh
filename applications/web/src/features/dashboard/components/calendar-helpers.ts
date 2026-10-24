@@ -9,6 +9,8 @@ export const MONTH_VIEW_ROWS = 6;
 
 export const WEEK_VIEW_DAYS = 7;
 
+export const THREE_DAY_VIEW_DAYS = 3;
+
 export function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -36,9 +38,9 @@ export function addDays(date: Date, days: number): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
-/** First day of the week view's rolling range centred on `anchor`. */
-export function startOfVisibleWeek(anchor: Date): Date {
-  return addDays(anchor, -Math.floor(WEEK_VIEW_DAYS / 2));
+/** First day of the day view's rolling range of `days` columns centred on `anchor`. */
+export function startOfVisibleWeek(anchor: Date, days = WEEK_VIEW_DAYS): Date {
+  return addDays(anchor, -Math.floor(days / 2));
 }
 
 export function startOfWeek(date: Date): Date {
@@ -79,9 +81,9 @@ export function formatMonthTitle(anchor: Date): string {
 }
 
 // Composed by hand: Intl has no day+year-without-month format ("Aug 19 – 25, 2026").
-export function formatWeekTitle(anchor: Date): string {
-  const start = startOfVisibleWeek(anchor);
-  const end = addDays(start, WEEK_VIEW_DAYS - 1);
+export function formatWeekTitle(anchor: Date, days = WEEK_VIEW_DAYS): string {
+  const start = startOfVisibleWeek(anchor, days);
+  const end = addDays(start, days - 1);
   const startMonth = start.toLocaleDateString("en-US", { month: "short" });
   const endMonth = end.toLocaleDateString("en-US", { month: "short" });
 
@@ -98,8 +100,8 @@ const FETCH_WEEKS_BEFORE = 1;
 const FETCH_WEEKS = 4;
 
 /** Half-open `[start, end)` quantised to calendar weeks, so a ±7-day page stays inside the previous window while the next loads. */
-export function getWeekFetchRange(anchor: Date): { start: Date; end: Date } {
-  const start = addDays(startOfWeek(startOfVisibleWeek(anchor)), -FETCH_WEEKS_BEFORE * 7);
+export function getWeekFetchRange(anchor: Date, days = WEEK_VIEW_DAYS): { start: Date; end: Date } {
+  const start = addDays(startOfWeek(startOfVisibleWeek(anchor, days)), -FETCH_WEEKS_BEFORE * 7);
   return { start, end: addDays(start, FETCH_WEEKS * 7) };
 }
 

@@ -43,7 +43,6 @@ import {
   MS_PER_DAY,
   startOfDay,
   startOfVisibleWeek,
-  WEEK_VIEW_DAYS,
 } from "./calendar-helpers";
 import { useStripRealign } from "./use-strip-realign";
 
@@ -51,8 +50,6 @@ const GUTTER_WIDTH = 52;
 const HEADER_HEIGHT = 64;
 const ALL_DAY_MAX_ROWS = 2;
 const ALL_DAY_BAND_PADDING_BOTTOM = 4;
-const VISIBLE_COLUMNS = WEEK_VIEW_DAYS;
-const CENTER_OFFSET = Math.floor(VISIBLE_COLUMNS / 2);
 /** Weeks buffered on each side of the entry range, so the strip scrolls without recentering logic. */
 const BUFFER_WEEKS = 26;
 
@@ -171,9 +168,13 @@ interface WeekGridProps {
   eventsByDay: Map<number, DayEvents>;
   onCenterDayChange: (centerDay: Date) => void;
   toolbar: ReactNode;
+  /** Day columns shown at once. The strip is built for one count, so change it with a `key`. */
+  days: number;
 }
 
-export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: WeekGridProps) {
+export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days }: WeekGridProps) {
+  const visibleColumns = days;
+  const centerOffset = Math.floor(visibleColumns / 2);
   const today = useStartOfToday();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
@@ -187,7 +188,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
   const alignedWidthRef = useRef<number | null>(null);
 
   const [stripDays] = useState(() => {
-    const start = addDays(startOfVisibleWeek(anchor), -BUFFER_WEEKS * 7);
+    const start = addDays(startOfVisibleWeek(anchor, visibleColumns), -BUFFER_WEEKS * 7);
     return Array.from({ length: (BUFFER_WEEKS * 2 + 1) * 7 }, (_, index) =>
       addDays(start, index),
     );
@@ -207,10 +208,10 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
         const slot = get(calendarHighlightSlotAtom);
         return (
           slot !== null &&
-          Math.abs(slot - EVENT_GRAPH_DAYS_BEFORE - visibleCenterOffset) <= CENTER_OFFSET
+          Math.abs(slot - EVENT_GRAPH_DAYS_BEFORE - visibleCenterOffset) <= centerOffset
         );
       }),
-    [visibleCenterOffset],
+    [visibleCenterOffset, centerOffset],
   );
   const highlightVisible = useAtomValue(highlightVisibleAtom);
   const setGraphHoverIndex = useSetAtom(eventGraphHoverIndexAtom);
@@ -219,21 +220,21 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
   const columnWidth = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return 1;
-    return Math.max((el.clientWidth - GUTTER_WIDTH) / VISIBLE_COLUMNS, 1);
-  }, []);
+    return Math.max((el.clientWidth - GUTTER_WIDTH) / visibleColumns, 1);
+  }, [visibleColumns]);
 
   const scrollToCenter = useCallback(
     (centerDay: Date, behavior: ScrollBehavior) => {
       const el = scrollerRef.current;
       if (!el) return;
-      const first = startOfVisibleWeek(centerDay);
+      const first = startOfVisibleWeek(centerDay, visibleColumns);
       const index = Math.round((first.getTime() - stripDays[0].getTime()) / MS_PER_DAY);
-      const clamped = Math.max(0, Math.min(index, stripDays.length - VISIBLE_COLUMNS));
+      const clamped = Math.max(0, Math.min(index, stripDays.length - visibleColumns));
       alignedCenterMsRef.current = centerDay.getTime();
       alignedWidthRef.current = el.clientWidth;
       el.scrollTo({ left: clamped * columnWidth(), behavior });
     },
-    [columnWidth, stripDays],
+    [columnWidth, stripDays, visibleColumns],
   );
 
   // Mount: centre the anchor and jump to business hours; afterwards, smooth-scroll on anchor moves.
@@ -259,7 +260,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
     const scroller = scrollerRef.current;
     const row = rowRef.current;
     if (!scroller || !row) return;
-    const travel = (-100 * (stripDays.length - VISIBLE_COLUMNS)) / stripDays.length;
+    const travel = (-100 * (stripDays.length - visibleColumns)) / stripDays.length;
     const animation = animate(
       row,
       { transform: ["translateX(0%)", `translateX(${travel}%)`] },
@@ -270,7 +271,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
       cancel();
       animation.cancel();
     };
-  }, [stripDays]);
+  }, [stripDays, visibleColumns]);
 
   const realign = useCallback(() => {
     const el = scrollerRef.current;
@@ -350,9 +351,9 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
       if (el.clientWidth !== alignedWidthRef.current) return;
       const index = Math.max(
         0,
-        Math.min(Math.round(el.scrollLeft / columnWidth()), stripDays.length - VISIBLE_COLUMNS),
+        Math.min(Math.round(el.scrollLeft / columnWidth()), stripDays.length - visibleColumns),
       );
-      const centerDay = stripDays[index + CENTER_OFFSET];
+      const centerDay = stripDays[index + centerOffset];
       setVisibleCenterMs(centerDay.getTime());
       if (centerDay.getTime() === alignedCenterMsRef.current) return;
       alignedCenterMsRef.current = centerDay.getTime();
@@ -367,9 +368,9 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
     [],
   );
 
-  const visibleStart = startOfVisibleWeek(anchor);
+  const visibleStart = startOfVisibleWeek(anchor, visibleColumns);
   let mostAllDay = 0;
-  for (let index = 0; index < VISIBLE_COLUMNS; index++) {
+  for (let index = 0; index < visibleColumns; index++) {
     const allDayCount = eventsByDay.get(addDays(visibleStart, index).getTime())?.allDay.length ?? 0;
     mostAllDay = Math.max(mostAllDay, allDayCount);
   }
@@ -385,7 +386,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
           data-highlighting={resolveDataAttr(highlightVisible)}
           style={{
             gridTemplateColumns: columnsTemplate,
-            width: `calc(${stripDays.length} * 100% / ${VISIBLE_COLUMNS})`,
+            width: `calc(${stripDays.length} * 100% / ${visibleColumns})`,
           }}
         >
           {stripDays.map((day) => (
@@ -439,7 +440,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar }: We
           className="relative grid shrink-0"
           style={{
             gridTemplateColumns: columnsTemplate,
-            width: `calc(${stripDays.length} * (100% - ${GUTTER_WIDTH}px) / ${VISIBLE_COLUMNS})`,
+            width: `calc(${stripDays.length} * (100% - ${GUTTER_WIDTH}px) / ${visibleColumns})`,
             height: HOUR_HEIGHT * HOURS.length,
           }}
         >

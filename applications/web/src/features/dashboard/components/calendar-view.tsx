@@ -17,11 +17,27 @@ import {
   formatWeekTitle,
   getMonthFetchRange,
   getWeekFetchRange,
+  THREE_DAY_VIEW_DAYS,
+  WEEK_VIEW_DAYS,
 } from "./calendar-helpers";
 
-type CalendarViewMode = "week" | "month";
+type CalendarViewMode = "3days" | "week" | "month";
 
-const VIEWS: CalendarViewMode[] = ["week", "month"];
+const VIEWS: CalendarViewMode[] = ["3days", "week", "month"];
+
+const VIEW_LABELS: Record<CalendarViewMode, string> = {
+  "3days": "3 days",
+  week: "Week",
+  month: "Month",
+};
+
+const dayViewColumns = (view: CalendarViewMode): number =>
+  view === "3days" ? THREE_DAY_VIEW_DAYS : WEEK_VIEW_DAYS;
+
+const resolveFetchRange = (view: CalendarViewMode, anchor: Date) => {
+  if (view === "month") return getMonthFetchRange(anchor);
+  return getWeekFetchRange(anchor, dayViewColumns(view));
+};
 
 const navButton =
   "flex size-8 items-center justify-center rounded-lg text-foreground-muted hover:bg-background-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -42,7 +58,8 @@ export function CalendarView() {
     [store],
   );
 
-  const fetchRange = view === "month" ? getMonthFetchRange(anchor) : getWeekFetchRange(anchor);
+  const columns = dayViewColumns(view);
+  const fetchRange = resolveFetchRange(view, anchor);
   const { events } = useEventsInRange(fetchRange.start, fetchRange.end);
   // Keyed on the window's instants, not `anchor`: the anchor moves on every scroll step, the window doesn't.
   const fetchStartMs = fetchRange.start.getTime();
@@ -52,7 +69,7 @@ export function CalendarView() {
     [events, fetchStartMs, fetchEndMs],
   );
 
-  const title = view === "month" ? formatMonthTitle(anchor) : formatWeekTitle(anchor);
+  const title = view === "month" ? formatMonthTitle(anchor) : formatWeekTitle(anchor, columns);
 
   const switchView = (mode: CalendarViewMode) => {
     if (mode === view) return;
@@ -67,9 +84,11 @@ export function CalendarView() {
   };
 
   const step = (direction: 1 | -1) => {
-    setAnchor((current) =>
-      view === "month" ? addMonthsClamped(current, direction) : addDays(current, direction * 7),
-    );
+    setAnchor((current) => {
+      if (view === "month") return addMonthsClamped(current, direction);
+      if (view === "3days") return addDays(current, direction);
+      return addDays(current, direction * 7);
+    });
   };
 
   const toolbar = (
@@ -85,13 +104,13 @@ export function CalendarView() {
               type="button"
               onClick={() => switchView(mode)}
               className={cn(
-                "rounded-md px-2.5 py-1 text-sm font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 mode === view
                   ? "bg-background-elevated text-foreground shadow-xs"
                   : "text-foreground-muted hover:text-foreground",
               )}
             >
-              {mode}
+              {VIEW_LABELS[mode]}
             </button>
           ))}
         </div>
@@ -128,6 +147,8 @@ export function CalendarView() {
     />
   ) : (
     <WeekGrid
+      key={columns}
+      days={columns}
       anchor={anchor}
       eventsByDay={eventsByDay}
       onCenterDayChange={setAnchor}

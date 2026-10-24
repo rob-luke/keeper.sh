@@ -6,6 +6,7 @@ import {
   DAYS_PER_WEEK,
   getMonthFetchRange,
   getMonthViewFocusDay,
+  formatWeekTitle,
   getWeekFetchRange,
   isSameMonth,
   MONTH_VIEW_ROWS,
@@ -13,6 +14,7 @@ import {
   startOfMonthGrid,
   startOfVisibleWeek,
   WEEK_STARTS_ON,
+  THREE_DAY_VIEW_DAYS,
   WEEK_VIEW_DAYS,
 } from "../../../../src/features/dashboard/components/calendar-helpers";
 
@@ -49,6 +51,35 @@ describe("getWeekFetchRange", () => {
 });
 
 // Two years of months cover daylight-saving changes and a year boundary.
+describe("three-day view", () => {
+  it("centres on the anchor, so it shows yesterday, today and tomorrow", () => {
+    const anchor = new Date(2026, 7, 22, 15, 30);
+
+    expect(startOfVisibleWeek(anchor, THREE_DAY_VIEW_DAYS)).toEqual(new Date(2026, 7, 21));
+  });
+
+  it("titles the three days shown", () => {
+    expect(formatWeekTitle(new Date(2026, 7, 22), THREE_DAY_VIEW_DAYS)).toBe("Aug 21 – 23, 2026");
+    expect(formatWeekTitle(new Date(2026, 7, 31), THREE_DAY_VIEW_DAYS)).toBe("Aug 30 – Sep 1, 2026");
+  });
+
+  it("covers the three days, and the days a one-day step or a page away, on every day", () => {
+    const last = new Date(2027, 11, 31);
+    const uncovered: string[] = [];
+    for (let anchor = new Date(2026, 0, 1); anchor <= last; anchor = addDays(anchor, 1)) {
+      const range = getWeekFetchRange(anchor, THREE_DAY_VIEW_DAYS);
+      for (const offset of [0, 1, -1, THREE_DAY_VIEW_DAYS, -THREE_DAY_VIEW_DAYS]) {
+        const first = startOfVisibleWeek(addDays(anchor, offset), THREE_DAY_VIEW_DAYS);
+        for (let index = 0; index < THREE_DAY_VIEW_DAYS; index++) {
+          if (!contains(range, addDays(first, index))) uncovered.push(`${anchor.toDateString()} ${offset}`);
+        }
+      }
+    }
+
+    expect(uncovered).toEqual([]);
+  });
+});
+
 const MONTHS = Array.from({ length: 24 }, (_, index) => new Date(2026, index, 1));
 
 const MONTH_VIEW_DAYS = MONTH_VIEW_ROWS * DAYS_PER_WEEK;
