@@ -48,6 +48,8 @@ import { useStripRealign } from "./use-strip-realign";
 
 const GUTTER_WIDTH = 52;
 const COMPACT_GUTTER_WIDTH = 44;
+/** How long after mount a scroll the user didn't make is still treated as a replayed offset. */
+const SETTLE_MS = 1500;
 const HEADER_HEIGHT = 64;
 const ALL_DAY_MAX_ROWS = 2;
 const ALL_DAY_BAND_PADDING_BOTTOM = 4;
@@ -378,6 +380,26 @@ export function WeekGrid({
     setOverlay(true);
   };
 
+  // The router replays a saved scroll offset on load, possibly from another width; until the user has touched
+  // the strip, a move off the aligned day is that replay, so it is put back instead of reported as paging.
+  const interactedRef = useRef(false);
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const markInteracted = () => {
+      interactedRef.current = true;
+    };
+    const events = ["pointerdown", "touchstart", "wheel", "keydown"] as const;
+    for (const name of events) {
+      scroller.addEventListener(name, markInteracted, { passive: true, once: true });
+    }
+    const timer = setTimeout(markInteracted, SETTLE_MS);
+    return () => {
+      clearTimeout(timer);
+      for (const name of events) scroller.removeEventListener(name, markInteracted);
+    };
+  }, []);
+
   const handleScroll = () => {
     const scroller = scrollerRef.current;
     if (scroller) scrollTopRef.current = scroller.scrollTop;
@@ -393,6 +415,7 @@ export function WeekGrid({
         Math.min(Math.round(el.scrollLeft / columnWidth()), stripDays.length - visibleColumns),
       );
       const centerDay = stripDays[index + centerOffset];
+      if (!interactedRef.current && centerDay.getTime() !== alignedCenterMsRef.current && realign()) return;
       setVisibleCenterMs(centerDay.getTime());
       if (centerDay.getTime() === alignedCenterMsRef.current) return;
       alignedCenterMsRef.current = centerDay.getTime();
