@@ -30,7 +30,7 @@ function CalendarPage() {
         </div>
       </StickyPageHeader>
       <div className="h-[calc(100dvh-14rem)] min-h-96">
-        <CalendarView views={PHONE_VIEWS} initialView="3days" />
+        <CalendarView views={PHONE_VIEWS} initialView="3days" compact />
       </div>
     </div>
   );

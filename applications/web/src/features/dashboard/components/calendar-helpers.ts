@@ -86,6 +86,9 @@ export function formatMonthTitle(anchor: Date): string {
 export function formatWeekTitle(anchor: Date, days = WEEK_VIEW_DAYS): string {
   const start = startOfVisibleWeek(anchor, days);
   const end = addDays(start, days - 1);
+  if (days === 1) {
+    return start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
   const startMonth = start.toLocaleDateString("en-US", { month: "short" });
   const endMonth = end.toLocaleDateString("en-US", { month: "short" });
 

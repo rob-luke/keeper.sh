@@ -19,6 +19,7 @@ import {
   withDayOfMonth,
 } from "./calendar-helpers";
 import { EventPill, EventPillOverflow } from "./event-card";
+import { resolveEventColor, resolveEventTint } from "./event-card.styles";
 import { EVENT_PILL_GAP_PX, resolvePillRows, resolveVisiblePillCount } from "./event-layout";
 import type { DayEvents } from "./event-layout";
 import { useStripRealign } from "./use-strip-realign";
@@ -69,6 +70,25 @@ interface MonthDayCellProps {
   timed: CalendarEvent[];
   pillRows: number;
   pillAreaRef?: Ref<HTMLDivElement>;
+  /** Dots instead of titled pills, and the whole cell opens the day: a phone column is too narrow for titles. */
+  compact: boolean;
+  onDayClick?: (day: Date) => void;
+}
+
+const MAX_COMPACT_DOTS = 6;
+
+function MonthDayDot({ event }: { event: CalendarEvent }) {
+  const tint = resolveEventTint(resolveEventColor(event));
+  return (
+    <span
+      className={cn(
+        "size-1.5 rounded-full bg-(--event-accent)",
+        tint.className,
+        isEventPast(event.endTime) && "opacity-40",
+      )}
+      style={tint.style}
+    />
+  );
 }
 
 const MonthDayCell = memo(function MonthDayCell({
@@ -79,8 +99,36 @@ const MonthDayCell = memo(function MonthDayCell({
   timed,
   pillRows,
   pillAreaRef,
+  compact,
+  onDayClick,
 }: MonthDayCellProps) {
   const pills = [...allDay, ...timed];
+  if (compact) {
+    return (
+      <button
+        type="button"
+        aria-label={day.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+        onClick={() => onDayClick?.(day)}
+        className="flex min-h-0 min-w-0 cursor-pointer flex-col items-center gap-1 overflow-hidden p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span
+          className={cn(
+            "flex h-6 min-w-6 items-center justify-center px-1 text-xs font-medium tabular-nums",
+            isToday && "rounded-full bg-emerald-400 text-neutral-950",
+            !isToday && inMonth && "text-foreground",
+            !isToday && !inMonth && "text-foreground-disabled",
+          )}
+        >
+          {day.getDate()}
+        </span>
+        <span className="flex flex-wrap justify-center gap-0.5 px-0.5">
+          {pills.slice(0, MAX_COMPACT_DOTS).map((event) => (
+            <MonthDayDot key={event.id} event={event} />
+          ))}
+        </span>
+      </button>
+    );
+  }
   const { visibleCount, hiddenCount } = resolveVisiblePillCount(pills.length, pillRows);
   return (
     <div className="flex min-h-0 min-w-0 flex-col gap-0.5 overflow-hidden p-1.5">
@@ -114,9 +162,18 @@ interface MonthGridProps {
   eventsByDay: Map<number, DayEvents>;
   onAnchorChange: (anchor: Date) => void;
   toolbar: ReactNode;
+  compact?: boolean;
+  onDayClick?: (day: Date) => void;
 }
 
-export function MonthGrid({ anchor, eventsByDay, onAnchorChange, toolbar }: MonthGridProps) {
+export function MonthGrid({
+  anchor,
+  eventsByDay,
+  onAnchorChange,
+  toolbar,
+  compact = false,
+  onDayClick,
+}: MonthGridProps) {
   const today = useStartOfToday();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -336,6 +393,8 @@ export function MonthGrid({ anchor, eventsByDay, onAnchorChange, toolbar }: Mont
                       timed={dayEvents?.timed ?? NO_EVENTS}
                       pillRows={pillRows}
                       pillAreaRef={weekIndex === 0 && column === 0 ? observePillArea : undefined}
+                      compact={compact}
+                      onDayClick={onDayClick}
                     />
                   );
                 })}

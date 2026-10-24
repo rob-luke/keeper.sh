@@ -14,6 +14,7 @@ import {
   startOfMonthGrid,
   startOfVisibleWeek,
   WEEK_STARTS_ON,
+  ONE_DAY_VIEW_DAYS,
   THREE_DAY_VIEW_DAYS,
   WEEK_VIEW_DAYS,
 } from "../../../../src/features/dashboard/components/calendar-helpers";
@@ -51,6 +52,15 @@ describe("getWeekFetchRange", () => {
 });
 
 // Two years of months cover daylight-saving changes and a year boundary.
+describe("one-day view", () => {
+  it("shows just the anchor day and titles it as one date", () => {
+    const anchor = new Date(2026, 7, 22, 15, 30);
+
+    expect(startOfVisibleWeek(anchor, ONE_DAY_VIEW_DAYS)).toEqual(new Date(2026, 7, 22));
+    expect(formatWeekTitle(anchor, ONE_DAY_VIEW_DAYS)).toBe("Aug 22, 2026");
+  });
+});
+
 describe("three-day view", () => {
   it("centres on the anchor, so it shows yesterday, today and tomorrow", () => {
     const anchor = new Date(2026, 7, 22, 15, 30);

@@ -51,9 +51,15 @@ interface CalendarViewProps {
   /** Views the switcher offers; a phone has no room for a seven-day strip. */
   views?: CalendarViewMode[];
   initialView?: CalendarViewMode;
+  /** Phone layout: month shows dots, and tapping a day opens it as a single day. */
+  compact?: boolean;
 }
 
-export function CalendarView({ views = ALL_VIEWS, initialView = "week" }: CalendarViewProps) {
+export function CalendarView({
+  views = ALL_VIEWS,
+  initialView = "week",
+  compact = false,
+}: CalendarViewProps) {
   const [view, setView] = useState<CalendarViewMode>(initialView);
   const [anchor, setAnchor] = useState(() => new Date());
 
@@ -102,6 +108,11 @@ export function CalendarView({ views = ALL_VIEWS, initialView = "week" }: Calend
     });
   };
 
+  const openDay = (day: Date) => {
+    setAnchor(day);
+    setView("1day");
+  };
+
   const toolbar = (
     <>
       <Text as="span" size="base" tone="default" className="font-medium">
@@ -115,7 +126,7 @@ export function CalendarView({ views = ALL_VIEWS, initialView = "week" }: Calend
               type="button"
               onClick={() => switchView(mode)}
               className={cn(
-                "rounded-md px-2.5 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "rounded-md px-2.5 py-1 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 mode === view
                   ? "bg-background-elevated text-foreground shadow-xs"
                   : "text-foreground-muted hover:text-foreground",
@@ -155,6 +166,8 @@ export function CalendarView({ views = ALL_VIEWS, initialView = "week" }: Calend
       eventsByDay={eventsByDay}
       onAnchorChange={setAnchor}
       toolbar={toolbar}
+      compact={compact}
+      onDayClick={openDay}
     />
   ) : (
     <WeekGrid
