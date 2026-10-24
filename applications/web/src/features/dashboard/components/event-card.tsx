@@ -5,6 +5,7 @@ import { cn } from "@/utils/cn";
 import { Text } from "@/components/ui/primitives/text";
 import { formatTime, formatTimeRange, formatTimeUntil } from "@/lib/time";
 import type { CalendarEvent } from "@/hooks/use-events";
+import { useIsOutsideSyncHours } from "@/hooks/use-sync-hours-dimming";
 import { resolveEventColor, resolveEventTint } from "./event-card.styles";
 import { EVENT_PILL_HEIGHT_PX } from "./event-layout";
 
@@ -96,6 +97,10 @@ const eventCard = tv({
       true: "bg-[color-mix(in_srgb,var(--event-surface)_50%,var(--color-background))] line-through before:opacity-50 *:opacity-50",
       false: "bg-(--event-surface)",
     },
+    // Outside the calendar's sync hours: the event stays visible but is not copied.
+    dimmed: {
+      true: "opacity-50",
+    },
   },
   defaultVariants: {
     layout: "list",
@@ -110,7 +115,8 @@ export const EventCard = memo(function EventCard({
 }: EventCardProps) {
   const title = event.title ?? event.calendarName;
   const tint = resolveEventTint(resolveEventColor(event));
-  const classes = cn(eventCard({ layout, past }), tint.className);
+  const dimmed = useIsOutsideSyncHours(event);
+  const classes = cn(eventCard({ layout, past, dimmed }), tint.className);
   const tintedStyle = { ...style, ...tint.style };
 
   if (layout === "grid") {
@@ -168,13 +174,17 @@ const eventPill = tv({
       true: "bg-[color-mix(in_srgb,var(--event-surface)_50%,var(--color-background))] line-through before:opacity-50 *:opacity-50",
       false: "bg-(--event-surface)",
     },
+    dimmed: {
+      true: "opacity-50",
+    },
   },
 });
 
 export const EventPill = memo(function EventPill({ event, past }: EventPillProps) {
   const tint = resolveEventTint(resolveEventColor(event));
+  const dimmed = useIsOutsideSyncHours(event);
   return (
-    <div className={cn(eventPill({ past }), tint.className)} style={{ height: EVENT_PILL_HEIGHT_PX, ...tint.style }}>
+    <div className={cn(eventPill({ past, dimmed }), tint.className)} style={{ height: EVENT_PILL_HEIGHT_PX, ...tint.style }}>
       <EventText as="span" size="xs" className="min-w-0 truncate font-medium">
         {event.title ?? event.calendarName}
       </EventText>

@@ -1,5 +1,27 @@
 import { type } from "arktype";
 import { isValidTimeZone, normalizeTimeZone } from "./time-zone";
+import {
+  DAY_LABELS,
+  DEFAULT_SYNC_HOURS_TIME_ZONE,
+  SYNC_HOURS_ALL_OFF,
+  SYNC_HOURS_ALL_ON,
+  SYNC_HOURS_DAYS,
+  SYNC_HOURS_LENGTH,
+  SYNC_HOURS_PER_DAY,
+  countSyncHours,
+  createSyncHoursFromRanges,
+  eventOverlapsSyncHours,
+  formatHour,
+  formatSyncHoursSummary,
+  isSyncHourOn,
+  isSyncHours,
+  normalizeSyncHours,
+  setSyncHours,
+  syncHourIndex,
+  syncHoursOrNullSchema,
+  syncHoursSchema,
+} from "./sync-hours";
+import type { SyncHoursEvent } from "./sync-hours";
 
 const proxyableMethods = type("'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD' | 'OPTIONS'");
 
@@ -600,6 +622,25 @@ export {
   canExcludeAvailability,
   isValidTimeZone,
   normalizeTimeZone,
+  DAY_LABELS,
+  DEFAULT_SYNC_HOURS_TIME_ZONE,
+  SYNC_HOURS_ALL_OFF,
+  SYNC_HOURS_ALL_ON,
+  SYNC_HOURS_DAYS,
+  SYNC_HOURS_LENGTH,
+  SYNC_HOURS_PER_DAY,
+  countSyncHours,
+  createSyncHoursFromRanges,
+  eventOverlapsSyncHours,
+  formatHour,
+  formatSyncHoursSummary,
+  isSyncHourOn,
+  isSyncHours,
+  normalizeSyncHours,
+  setSyncHours,
+  syncHourIndex,
+  syncHoursOrNullSchema,
+  syncHoursSchema,
   excludableAvailabilitySchema,
   excludeTitleKeywordsSchema,
   getExcludableAvailabilities,
@@ -662,6 +703,7 @@ export {
 };
 
 export type {
+  SyncHoursEvent,
   ProxyableMethods,
   Plan,
   SyncRange,

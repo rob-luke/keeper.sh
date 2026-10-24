@@ -1,4 +1,8 @@
-import { canExcludeAvailability, normalizeTitleKeywords } from "@keeper.sh/data-schemas";
+import {
+  canExcludeAvailability,
+  normalizeSyncHours,
+  normalizeTitleKeywords,
+} from "@keeper.sh/data-schemas";
 import type { SourcePatchBody } from "@/utils/request-body";
 import { sourcePatchBodySchema } from "@/utils/request-body";
 import { idParamSchema } from "@/utils/request-query";
@@ -29,6 +33,7 @@ const PRO_GATED_SOURCE_FIELDS = [
   "treatFullDayTimedEventsAsAllDay",
   "syncHistoricRange",
   "syncFutureRange",
+  "syncHours",
 ] as const;
 
 interface SourceRouteContext {
@@ -122,6 +127,10 @@ const buildSourceUpdates = (
   }
   if (body.excludeTitleKeywords) {
     updates.excludeTitleKeywords = normalizeTitleKeywords(body.excludeTitleKeywords);
+  }
+  if ("syncHours" in body) {
+    // Null clears the schedule; a schedule with every hour on is the same as none.
+    updates.syncHours = normalizeSyncHours(body.syncHours);
   }
 
   for (const field of SOURCE_BOOLEAN_UPDATE_FIELDS) {

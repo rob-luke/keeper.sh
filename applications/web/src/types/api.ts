@@ -35,6 +35,7 @@ export interface CalendarSource {
   accountIdentifier: string | null;
   needsReauthentication: boolean;
   includeInIcalFeed: boolean;
+  syncHours: string | null;
   unavailableSince: string | null;
   disabled: boolean;
   providerMissingSince: string | null;
@@ -64,6 +65,7 @@ export interface CalendarDetail {
   treatFullDayTimedEventsAsAllDay: boolean;
   syncFutureRange: SyncRange;
   syncHistoricRange: SyncRange;
+  syncHours: string | null;
   disabled: boolean;
   ingestFailureCount: number;
   ingestLastFailureAt: string | null;

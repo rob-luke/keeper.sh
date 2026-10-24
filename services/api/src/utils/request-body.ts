@@ -2,6 +2,7 @@ import { type } from "arktype";
 import {
   excludableAvailabilitySchema,
   excludeTitleKeywordsSchema,
+  syncHoursOrNullSchema,
   syncRangeSchema,
 } from "@keeper.sh/data-schemas";
 
@@ -27,6 +28,7 @@ const sourcePatchBodySchema = type({
   "treatFullDayTimedEventsAsAllDay?": "boolean",
   "syncHistoricRange?": syncRangeSchema,
   "syncFutureRange?": syncRangeSchema,
+  "syncHours?": syncHoursOrNullSchema,
   "markEventsAsPrivate?": "boolean",
   "+": "reject",
 });

@@ -94,6 +94,7 @@ const makeCalendar = (capabilities: string[]): CalendarDetail => ({
   sourceIds: [],
   syncFutureRange: "12_months",
   syncHistoricRange: "12_months",
+  syncHours: null,
   treatFullDayTimedEventsAsAllDay: false,
   unavailableSince: null,
   updatedAt: "2026-01-01T00:00:00.000Z",

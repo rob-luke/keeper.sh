@@ -1,7 +1,9 @@
+import { eventOverlapsSyncHours } from "@keeper.sh/data-schemas";
 import {
   calendarsTable,
   eventStatesTable,
   sourceDestinationMappingsTable,
+  userPreferencesTable,
 } from "@keeper.sh/database/schema";
 import { and, asc, eq, gte, inArray, isNotNull, or } from "drizzle-orm";
 import type { BunSQLClient } from "../database-client";
@@ -203,6 +205,32 @@ const resolveEventNameTemplate = (
   return resolved || variables.calendar_name || DEFAULT_EVENT_NAME;
 };
 
+interface SyncHoursInput {
+  endTime: Date;
+  homeTimeZone: string | null;
+  isAllDay: boolean | null;
+  recurrenceId: unknown;
+  recurrenceRule: unknown;
+  startTime: Date;
+  syncHours: string | null;
+}
+
+/*
+ * A calendar's sync hours judge each stored event by its own time. Whole-day events are left to the
+ * all-day exclusion, and a recurring series stored as one row (CalDAV and ICS sources; Google stores every
+ * occurrence on its own row) cannot be judged by its first occurrence, so it is left alone.
+ */
+const isOutsideSyncHours = (event: SyncHoursInput): boolean => {
+  if (event.syncHours === null || event.isAllDay === true) {
+    return false;
+  }
+  const isSeriesMaster = event.recurrenceRule !== null && event.recurrenceId === null;
+  if (isSeriesMaster) {
+    return false;
+  }
+  return !eventOverlapsSyncHours(event, event.syncHours, event.homeTimeZone);
+};
+
 const getMappedSourceCalendarIds = async (
   database: BunSQLClient,
   destinationCalendarId: string,
@@ -241,7 +269,9 @@ const getEventsForCalendarsWithDiagnostics = async (
       excludeFocusTime: calendarsTable.excludeFocusTime,
       excludeOutOfOffice: calendarsTable.excludeOutOfOffice,
       excludeTitleKeywords: calendarsTable.excludeTitleKeywords,
+      homeTimeZone: userPreferencesTable.homeTimeZone,
       markEventsAsPrivate: calendarsTable.markEventsAsPrivate,
+      syncHours: calendarsTable.syncHours,
       availability: eventStatesTable.availability,
       description: eventStatesTable.description,
       endTime: eventStatesTable.endTime,
@@ -259,6 +289,7 @@ const getEventsForCalendarsWithDiagnostics = async (
     })
     .from(eventStatesTable)
     .innerJoin(calendarsTable, eq(eventStatesTable.calendarId, calendarsTable.id))
+    .leftJoin(userPreferencesTable, eq(userPreferencesTable.userId, calendarsTable.userId))
     .where(
       and(
         inArray(eventStatesTable.calendarId, calendarIds),
@@ -294,10 +325,13 @@ const getEventsForCalendarsWithDiagnostics = async (
       missingSourceEventUidCount += 1;
       continue;
     }
-    if (matchesSyncExclusion(
-      result,
-      getLowercasedTitleKeywords(result.calendarId, result.excludeTitleKeywords),
-    )) {
+    if (
+      matchesSyncExclusion(
+        result,
+        getLowercasedTitleKeywords(result.calendarId, result.excludeTitleKeywords),
+      )
+      || isOutsideSyncHours(result)
+    ) {
       excludedBySyncPolicyCount += 1;
       if (result.recurrenceId) {
         excludedOverrides.push({
@@ -424,6 +458,7 @@ export {
   getEventsForDestination,
   getMappedSourceCalendarIds,
   isEventInDestinationReconciliationWindow,
+  isOutsideSyncHours,
   shouldExcludeSyncEvent,
 };
 export type { DestinationEventReadDiagnostics, DestinationEventReadResult };

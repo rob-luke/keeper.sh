@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SYNC_HOURS_ALL_ON, createSyncHoursFromRanges } from "@keeper.sh/data-schemas";
 import { handlePatchSourceRoute } from "../../../../../src/routes/api/sources/[id]/source-item-routes";
 
 const readJson = (response: Response): Promise<unknown> => response.json();
@@ -363,5 +364,66 @@ describe("handlePatchSourceRoute excluded statuses", () => {
     );
 
     expect(response.status).toBe(403);
+  });
+});
+
+describe("handlePatchSourceRoute sync hours", () => {
+  const NINE_TO_FIVE = createSyncHoursFromRanges([0, 1, 2, 3, 4], 9, 17);
+
+  const patchSyncHours = (
+    syncHours: unknown,
+    canUseEventFilters = true,
+  ) =>
+    handlePatchSourceRoute(
+      {
+        body: { syncHours },
+        params: { id: "source-1" },
+        userId: "user-1",
+      },
+      {
+        canUseEventFilters: () => Promise.resolve(canUseEventFilters),
+        getSourceExclusionState: () => Promise.resolve(OUTLOOK_SOURCE),
+        updateSource: (_userId, _sourceId, updates) => Promise.resolve({ id: "source-1", ...updates }),
+      },
+    );
+
+  it("stores a schedule for Pro users", async () => {
+    const response = await patchSyncHours(NINE_TO_FIVE);
+
+    expect(await readJson(response)).toEqual({ id: "source-1", syncHours: NINE_TO_FIVE });
+  });
+
+  it("stores a schedule with every hour on as no schedule", async () => {
+    const response = await patchSyncHours(SYNC_HOURS_ALL_ON);
+
+    expect(await readJson(response)).toEqual({ id: "source-1", syncHours: null });
+  });
+
+  it("clears the schedule with null", async () => {
+    const response = await patchSyncHours(null);
+
+    expect(await readJson(response)).toEqual({ id: "source-1", syncHours: null });
+  });
+
+  it("rejects a schedule that is not 168 on/off flags", async () => {
+    const tooShort = await patchSyncHours("101");
+    const badCharacter = await patchSyncHours(`${"1".repeat(167)}x`);
+    const notAString = await patchSyncHours(42);
+
+    expect(tooShort.status).toBe(400);
+    expect(badCharacter.status).toBe(400);
+    expect(notAString.status).toBe(400);
+  });
+
+  it("returns 403 when free users set a schedule", async () => {
+    const response = await patchSyncHours(NINE_TO_FIVE, false);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("lets free users clear a schedule", async () => {
+    const response = await patchSyncHours(null, false);
+
+    expect(response.status).toBe(200);
   });
 });

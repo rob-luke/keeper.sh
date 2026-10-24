@@ -1,0 +1,2 @@
+ALTER TABLE "calendars" ADD COLUMN "syncHours" text;--> statement-breakpoint
+ALTER TABLE "calendars" ADD CONSTRAINT "calendars_sync_hours_check" CHECK ("syncHours" IS NULL OR "syncHours" ~ '^[01]{168}$');

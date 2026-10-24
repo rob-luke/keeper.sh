@@ -15,6 +15,7 @@ import {
   DEFAULT_FEED_SETTINGS,
   DEFAULT_FUTURE_SYNC_RANGE,
   DEFAULT_HISTORIC_SYNC_RANGE,
+  SYNC_HOURS_LENGTH,
   SYNC_RANGE_DEFINITIONS,
 } from "@keeper.sh/data-schemas";
 import { user } from "./auth-schema";
@@ -149,6 +150,8 @@ const calendarsTable = pgTable(
     storedEventCount: integer(),
     syncFutureRange: text().notNull().default(DEFAULT_FUTURE_SYNC_RANGE),
     syncHistoricRange: text().notNull().default(DEFAULT_HISTORIC_SYNC_RANGE),
+    /* One flag per hour of the week, read in the user's home time zone; null means any hour. */
+    syncHours: text(),
     unavailableSince: timestamp({ withTimezone: true }),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
@@ -172,6 +175,10 @@ const calendarsTable = pgTable(
     check(
       "calendars_sync_ranges_check",
       sql`"syncHistoricRange" IN (${sql.raw(SYNC_RANGE_SQL_VALUES)}) AND "syncFutureRange" IN (${sql.raw(SYNC_RANGE_SQL_VALUES)})`,
+    ),
+    check(
+      "calendars_sync_hours_check",
+      sql`"syncHours" IS NULL OR "syncHours" ~ ${sql.raw(`'^[01]{${SYNC_HOURS_LENGTH}}$'`)}`,
     ),
     check(
       "calendars_ingest_coverage_check",

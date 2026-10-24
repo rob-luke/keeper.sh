@@ -27,6 +27,7 @@ interface KeeperSource {
   accountIdentifier: string;
   needsReauthentication: boolean;
   includeInIcalFeed: boolean;
+  syncHours: string | null;
   unavailableSince: Date | null;
   disabled: boolean;
   providerMissingSince: string | null;

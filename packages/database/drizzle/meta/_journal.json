@@ -701,6 +701,13 @@
       "when": 1792830228854,
       "tag": "0099_add_user_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1792830891565,
+      "tag": "0100_add_calendar_sync_hours",
+      "breakpoints": true
     }
   ]
 }

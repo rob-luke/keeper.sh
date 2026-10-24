@@ -18,6 +18,7 @@ import { MenuHint, PremiumHint, PremiumGate } from "@/components/ui/primitives/m
 import { Pagination, PaginationPrevious, PaginationNext } from "@/components/ui/primitives/pagination";
 import { RouteShell } from "@/components/ui/shells/route-shell";
 import { useReauthAccounts } from "@/features/dashboard/components/reauth/use-reauth-accounts";
+import { SyncHoursItem } from "@/features/dashboard/components/sync-hours-item";
 import { CalendarColorDot } from "@/features/dashboard/components/calendar-color-dot";
 import { MetadataRow } from "@/features/dashboard/components/metadata-row";
 import { ProviderIcon } from "@/components/ui/primitives/provider-icon";
@@ -200,6 +201,7 @@ function CalendarDetailPage() {
         {isPushCapable && <SyncWindowSection calendarId={calendarId} />}
         {isPullCapable && <SyncSettingsSection calendarId={calendarId} />}
         {isPullCapable && <ExclusionsSection calendarId={calendarId} provider={calendar.provider} />}
+        {isPullCapable && <SyncHoursSection calendarId={calendarId} />}
         <CalendarInfoSection account={account} accountId={accountId} />
         {!isPushCapable && <DeleteCalendarSection accountId={accountId} calendarId={calendarId} />}
       </PageBody>
@@ -850,6 +852,25 @@ function SyncEventNameToggleIndicator({ disabled }: { disabled: boolean }) {
     <div className={navigationMenuToggleTrack({ variant, checked, disabled, className: "ml-auto" })}>
       <div className={navigationMenuToggleThumb({ variant, checked })} />
     </div>
+  );
+}
+
+function SyncHoursSection({ calendarId }: { calendarId: string }) {
+  const { data: entitlements } = useEntitlements();
+  const locked = entitlements ? !entitlements.canUseEventFilters : false;
+
+  return (
+    <>
+      <DashboardSection
+        title="Sync Hours"
+        description="Choose the days and hours of the week when this calendar's events are copied. An event is copied when any part of it falls inside these hours."
+      />
+      <PremiumGate locked={locked} hint="Sync hours are a Pro feature.">
+        <NavigationMenu>
+          <SyncHoursItem calendarId={calendarId} locked={locked} />
+        </NavigationMenu>
+      </PremiumGate>
+    </>
   );
 }
 

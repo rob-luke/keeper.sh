@@ -21,6 +21,7 @@ const listSources = async (database: KeeperDatabase, userId: string): Promise<Ke
       accountIdentifier: calendarAccountsTable.accountId,
       needsReauthentication: calendarAccountsTable.needsReauthentication,
       includeInIcalFeed: calendarsTable.includeInIcalFeed,
+      syncHours: calendarsTable.syncHours,
       unavailableSince: calendarsTable.unavailableSince,
       disabled: calendarsTable.disabled,
       providerMissingSince: calendarsTable.providerMissingSince,

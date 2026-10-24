@@ -46,6 +46,7 @@ const GET = withWideEvent(
         excludeTitleKeywords: calendarsTable.excludeTitleKeywords,
         syncFutureRange: calendarsTable.syncFutureRange,
         syncHistoricRange: calendarsTable.syncHistoricRange,
+        syncHours: calendarsTable.syncHours,
         treatFullDayTimedEventsAsAllDay: calendarsTable.treatFullDayTimedEventsAsAllDay,
         unavailableSince: calendarsTable.unavailableSince,
         disabled: calendarsTable.disabled,
@@ -87,6 +88,7 @@ const SYNC_REQUESTING_FIELDS = [
   "markEventsAsPrivate",
   "excludeAvailabilities",
   "excludeTitleKeywords",
+  "syncHours",
 ] as const;
 
 const PATCH = withWideEvent(
