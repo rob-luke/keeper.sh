@@ -29,7 +29,7 @@ function CalendarPage() {
           <Text size="sm">Your events across all of your calendars.</Text>
         </div>
       </StickyPageHeader>
-      <div className="h-[calc(100dvh-14rem)] min-h-96">
+      <div className="h-[calc(100dvh-11.5rem)] min-h-96">
         <CalendarView views={PHONE_VIEWS} initialView="3days" compact />
       </div>
     </div>
