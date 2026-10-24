@@ -7,9 +7,18 @@ import { popoverOverlayAtom } from "@/state/popover-overlay";
 import { SyncProvider } from "@/providers/sync-provider";
 import { resolveDashboardRedirect } from "@/lib/route-access-guards";
 import { CalendarView } from "@/features/dashboard/components/calendar-view";
-import { cn } from "@/utils/cn";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { SidebarPageTransition } from "@/features/dashboard/components/sidebar-page-transition";
+
+// `cn` does not merge conflicting utilities, so the two layouts are kept as disjoint class sets.
+const COLUMN_BASE =
+  "relative flex w-full shrink-0 flex-col [--sidebar-pad-b:3rem] [--sidebar-pad-t:1.5rem] [--sidebar-pad-x:0.25rem] lg:h-[calc(100dvh-2rem)] lg:overflow-y-auto lg:px-(--sidebar-pad-x) lg:pt-(--sidebar-pad-t)";
+const COLUMN_PADDED = "max-w-sm gap-3 px-4 pb-(--sidebar-pad-b) pt-4 xs:pt-[min(6rem,25vh)]";
+
+const resolveColumnClass = (fullBleed: boolean): string => {
+  if (fullBleed) return COLUMN_BASE;
+  return `${COLUMN_BASE} ${COLUMN_PADDED}`;
+};
 
 const PHONE_CALENDAR_PATH = "/dashboard/calendar";
 const DESKTOP_QUERY = "(min-width: 64rem)";
@@ -46,12 +55,7 @@ function DashboardLayout() {
 
   return (
     <div className="relative flex min-h-dvh justify-center lg:justify-start lg:gap-4 lg:p-4">
-      <div
-        className={cn(
-          "relative flex w-full max-w-sm shrink-0 flex-col gap-3 px-4 pb-(--sidebar-pad-b) pt-4 [--sidebar-pad-b:3rem] [--sidebar-pad-t:1.5rem] [--sidebar-pad-x:0.25rem] xs:pt-[min(6rem,25vh)] lg:h-[calc(100dvh-2rem)] lg:overflow-y-auto lg:px-(--sidebar-pad-x) lg:pt-(--sidebar-pad-t)",
-          fullBleed && "max-w-none gap-0 px-0 pt-0 pb-0 xs:pt-0",
-        )}
-      >
+      <div className={resolveColumnClass(fullBleed)}>
         <LazyMotion features={loadMotionFeatures}>
           <AnimatePresence>
             {overlayActive && (

@@ -132,7 +132,7 @@ export function CalendarView({
           const next = views.find((mode) => mode === event.target.value);
           if (next) switchView(next);
         }}
-        className="appearance-none rounded-lg bg-background-hover py-1.5 pr-7 pl-2.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="appearance-none rounded-lg bg-background-hover py-1.5 pr-6 pl-2 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {views.map((mode) => (
           <option key={mode} value={mode}>
@@ -140,19 +140,19 @@ export function CalendarView({
           </option>
         ))}
       </select>
-      <ChevronDown size={14} className="pointer-events-none absolute right-2 text-foreground-muted" />
+      <ChevronDown size={14} className="pointer-events-none absolute right-1.5 text-foreground-muted" />
     </label>
   );
 
   const compactToolbar = (
-    <div className="flex w-full items-center gap-1.5">
+    <div className="flex w-full items-center gap-1">
       <BackButton className="aspect-square shrink-0" />
       <Text as="span" size="base" tone="default" className="min-w-0 flex-1 truncate font-medium">
         {compactTitle}
       </Text>
       <button
         type="button"
-        className="shrink-0 rounded-lg px-2 py-1.5 text-sm font-medium text-foreground-muted hover:bg-background-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="shrink-0 rounded-lg px-1.5 py-1.5 text-sm font-medium text-foreground-muted hover:bg-background-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => setAnchor(new Date())}
       >
         Today
