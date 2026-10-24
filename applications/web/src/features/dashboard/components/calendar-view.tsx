@@ -17,22 +17,27 @@ import {
   formatWeekTitle,
   getMonthFetchRange,
   getWeekFetchRange,
+  ONE_DAY_VIEW_DAYS,
   THREE_DAY_VIEW_DAYS,
   WEEK_VIEW_DAYS,
 } from "./calendar-helpers";
 
-type CalendarViewMode = "3days" | "week" | "month";
+export type CalendarViewMode = "1day" | "3days" | "week" | "month";
 
-const VIEWS: CalendarViewMode[] = ["3days", "week", "month"];
+const ALL_VIEWS: CalendarViewMode[] = ["1day", "3days", "week", "month"];
 
 const VIEW_LABELS: Record<CalendarViewMode, string> = {
+  "1day": "1 day",
   "3days": "3 days",
   week: "Week",
   month: "Month",
 };
 
-const dayViewColumns = (view: CalendarViewMode): number =>
-  view === "3days" ? THREE_DAY_VIEW_DAYS : WEEK_VIEW_DAYS;
+const dayViewColumns = (view: CalendarViewMode): number => {
+  if (view === "1day") return ONE_DAY_VIEW_DAYS;
+  if (view === "3days") return THREE_DAY_VIEW_DAYS;
+  return WEEK_VIEW_DAYS;
+};
 
 const resolveFetchRange = (view: CalendarViewMode, anchor: Date) => {
   if (view === "month") return getMonthFetchRange(anchor);
@@ -42,8 +47,14 @@ const resolveFetchRange = (view: CalendarViewMode, anchor: Date) => {
 const navButton =
   "flex size-8 items-center justify-center rounded-lg text-foreground-muted hover:bg-background-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-export function CalendarView() {
-  const [view, setView] = useState<CalendarViewMode>("week");
+interface CalendarViewProps {
+  /** Views the switcher offers; a phone has no room for a seven-day strip. */
+  views?: CalendarViewMode[];
+  initialView?: CalendarViewMode;
+}
+
+export function CalendarView({ views = ALL_VIEWS, initialView = "week" }: CalendarViewProps) {
+  const [view, setView] = useState<CalendarViewMode>(initialView);
   const [anchor, setAnchor] = useState(() => new Date());
 
   const store = useStore();
@@ -52,10 +63,10 @@ export function CalendarView() {
       store.sub(calendarJumpAtom, () => {
         const jump = store.get(calendarJumpAtom);
         if (!jump) return;
-        setView("week");
+        if (views.includes("week")) setView("week");
         setAnchor(new Date(jump.dayMs));
       }),
-    [store],
+    [store, views],
   );
 
   const columns = dayViewColumns(view);
@@ -86,7 +97,7 @@ export function CalendarView() {
   const step = (direction: 1 | -1) => {
     setAnchor((current) => {
       if (view === "month") return addMonthsClamped(current, direction);
-      if (view === "3days") return addDays(current, direction);
+      if (view === "1day" || view === "3days") return addDays(current, direction);
       return addDays(current, direction * 7);
     });
   };
@@ -98,7 +109,7 @@ export function CalendarView() {
       </Text>
       <div className="flex items-center gap-3">
         <div className="flex items-center rounded-lg bg-background-hover p-0.5">
-          {VIEWS.map((mode) => (
+          {views.map((mode) => (
             <button
               key={mode}
               type="button"

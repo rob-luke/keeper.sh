@@ -63,6 +63,7 @@ import { Route as dashboardDashboardIntegrationsIndexRouteImport } from './../..
 import { Route as dashboardDashboardIcalIndexRouteImport } from './../../routes/(dashboard)/dashboard/ical/index'
 import { Route as dashboardDashboardEventsIndexRouteImport } from './../../routes/(dashboard)/dashboard/events/index'
 import { Route as dashboardDashboardConnectIndexRouteImport } from './../../routes/(dashboard)/dashboard/connect/index'
+import { Route as dashboardDashboardCalendarIndexRouteImport } from './../../routes/(dashboard)/dashboard/calendar/index'
 import { Route as oauthDashboardConnectOutlookRouteImport } from './../../routes/(oauth)/dashboard/connect/outlook'
 import { Route as oauthDashboardConnectMicrosoftRouteImport } from './../../routes/(oauth)/dashboard/connect/microsoft'
 import { Route as oauthDashboardConnectIcsFileRouteImport } from './../../routes/(oauth)/dashboard/connect/ics-file'
@@ -361,6 +362,12 @@ const dashboardDashboardConnectIndexRoute =
     path: '/',
     getParentRoute: () => dashboardDashboardConnectRouteRoute,
   } as any)
+const dashboardDashboardCalendarIndexRoute =
+  dashboardDashboardCalendarIndexRouteImport.update({
+    id: '/dashboard/calendar/',
+    path: '/dashboard/calendar/',
+    getParentRoute: () => dashboardRouteRoute,
+  } as any)
 const oauthDashboardConnectOutlookRoute =
   oauthDashboardConnectOutlookRouteImport.update({
     id: '/outlook',
@@ -514,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/connect/ics-file': typeof oauthDashboardConnectIcsFileRoute
   '/dashboard/connect/microsoft': typeof oauthDashboardConnectMicrosoftRoute
   '/dashboard/connect/outlook': typeof oauthDashboardConnectOutlookRoute
+  '/dashboard/calendar/': typeof dashboardDashboardCalendarIndexRoute
   '/dashboard/connect/': typeof dashboardDashboardConnectIndexRoute
   '/dashboard/events/': typeof dashboardDashboardEventsIndexRoute
   '/dashboard/ical/': typeof dashboardDashboardIcalIndexRoute
@@ -576,6 +584,7 @@ export interface FileRoutesByTo {
   '/dashboard/connect/ics-file': typeof oauthDashboardConnectIcsFileRoute
   '/dashboard/connect/microsoft': typeof oauthDashboardConnectMicrosoftRoute
   '/dashboard/connect/outlook': typeof oauthDashboardConnectOutlookRoute
+  '/dashboard/calendar': typeof dashboardDashboardCalendarIndexRoute
   '/dashboard/events': typeof dashboardDashboardEventsIndexRoute
   '/dashboard/ical': typeof dashboardDashboardIcalIndexRoute
   '/dashboard/integrations': typeof dashboardDashboardIntegrationsIndexRoute
@@ -648,6 +657,7 @@ export interface FileRoutesById {
   '/(oauth)/dashboard/connect/ics-file': typeof oauthDashboardConnectIcsFileRoute
   '/(oauth)/dashboard/connect/microsoft': typeof oauthDashboardConnectMicrosoftRoute
   '/(oauth)/dashboard/connect/outlook': typeof oauthDashboardConnectOutlookRoute
+  '/(dashboard)/dashboard/calendar/': typeof dashboardDashboardCalendarIndexRoute
   '/(dashboard)/dashboard/connect/': typeof dashboardDashboardConnectIndexRoute
   '/(dashboard)/dashboard/events/': typeof dashboardDashboardEventsIndexRoute
   '/(dashboard)/dashboard/ical/': typeof dashboardDashboardIcalIndexRoute
@@ -717,6 +727,7 @@ export interface FileRouteTypes {
     | '/dashboard/connect/ics-file'
     | '/dashboard/connect/microsoft'
     | '/dashboard/connect/outlook'
+    | '/dashboard/calendar/'
     | '/dashboard/connect/'
     | '/dashboard/events/'
     | '/dashboard/ical/'
@@ -779,6 +790,7 @@ export interface FileRouteTypes {
     | '/dashboard/connect/ics-file'
     | '/dashboard/connect/microsoft'
     | '/dashboard/connect/outlook'
+    | '/dashboard/calendar'
     | '/dashboard/events'
     | '/dashboard/ical'
     | '/dashboard/integrations'
@@ -850,6 +862,7 @@ export interface FileRouteTypes {
     | '/(oauth)/dashboard/connect/ics-file'
     | '/(oauth)/dashboard/connect/microsoft'
     | '/(oauth)/dashboard/connect/outlook'
+    | '/(dashboard)/dashboard/calendar/'
     | '/(dashboard)/dashboard/connect/'
     | '/(dashboard)/dashboard/events/'
     | '/(dashboard)/dashboard/ical/'
@@ -1249,6 +1262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof dashboardDashboardConnectIndexRouteImport
       parentRoute: typeof dashboardDashboardConnectRouteRoute
     }
+    '/(dashboard)/dashboard/calendar/': {
+      id: '/(dashboard)/dashboard/calendar/'
+      path: '/dashboard/calendar'
+      fullPath: '/dashboard/calendar/'
+      preLoaderRoute: typeof dashboardDashboardCalendarIndexRouteImport
+      parentRoute: typeof dashboardRouteRoute
+    }
     '/(oauth)/dashboard/connect/outlook': {
       id: '/(oauth)/dashboard/connect/outlook'
       path: '/outlook'
@@ -1471,6 +1491,7 @@ interface dashboardRouteRouteChildren {
   dashboardDashboardFeedbackRoute: typeof dashboardDashboardFeedbackRoute
   dashboardDashboardReportRoute: typeof dashboardDashboardReportRoute
   dashboardDashboardIndexRoute: typeof dashboardDashboardIndexRoute
+  dashboardDashboardCalendarIndexRoute: typeof dashboardDashboardCalendarIndexRoute
   dashboardDashboardEventsIndexRoute: typeof dashboardDashboardEventsIndexRoute
   dashboardDashboardIntegrationsIndexRoute: typeof dashboardDashboardIntegrationsIndexRoute
   dashboardDashboardUpgradeIndexRoute: typeof dashboardDashboardUpgradeIndexRoute
@@ -1488,6 +1509,7 @@ const dashboardRouteRouteChildren: dashboardRouteRouteChildren = {
   dashboardDashboardFeedbackRoute: dashboardDashboardFeedbackRoute,
   dashboardDashboardReportRoute: dashboardDashboardReportRoute,
   dashboardDashboardIndexRoute: dashboardDashboardIndexRoute,
+  dashboardDashboardCalendarIndexRoute: dashboardDashboardCalendarIndexRoute,
   dashboardDashboardEventsIndexRoute: dashboardDashboardEventsIndexRoute,
   dashboardDashboardIntegrationsIndexRoute:
     dashboardDashboardIntegrationsIndexRoute,

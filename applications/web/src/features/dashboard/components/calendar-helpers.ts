@@ -9,6 +9,8 @@ export const MONTH_VIEW_ROWS = 6;
 
 export const WEEK_VIEW_DAYS = 7;
 
+export const ONE_DAY_VIEW_DAYS = 1;
+
 export const THREE_DAY_VIEW_DAYS = 3;
 
 export function startOfDay(date: Date): Date {

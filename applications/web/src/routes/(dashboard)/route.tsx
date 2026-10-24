@@ -7,7 +7,10 @@ import { popoverOverlayAtom } from "@/state/popover-overlay";
 import { SyncProvider } from "@/providers/sync-provider";
 import { resolveDashboardRedirect } from "@/lib/route-access-guards";
 import { CalendarView } from "@/features/dashboard/components/calendar-view";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { SidebarPageTransition } from "@/features/dashboard/components/sidebar-page-transition";
+
+const DESKTOP_QUERY = "(min-width: 64rem)";
 
 export const Route = createFileRoute("/(dashboard)")({
   beforeLoad: ({ context }) => {
@@ -33,6 +36,8 @@ export const Route = createFileRoute("/(dashboard)")({
 
 function DashboardLayout() {
   const overlayActive = useAtomValue(popoverOverlayAtom);
+  // Only one calendar may be mounted: the phone has its own page, and two would share one event popover.
+  const desktop = useMediaQuery(DESKTOP_QUERY);
 
   return (
     <div className="relative flex min-h-dvh justify-center lg:justify-start lg:gap-4 lg:p-4">
@@ -57,7 +62,7 @@ function DashboardLayout() {
       </div>
       {/* `isolate` keeps the calendar's sticky z-indices under the popover blur overlay (z-10). */}
       <div className="hidden lg:flex lg:h-[calc(100dvh-2rem)] lg:min-w-0 lg:flex-1 lg:isolate">
-        <CalendarView />
+        {desktop && <CalendarView />}
       </div>
     </div>
   );

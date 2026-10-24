@@ -5,6 +5,7 @@ import { AnimatedReveal } from "@/components/ui/primitives/animated-reveal";
 import Calendar from "lucide-react/dist/esm/icons/calendar";
 import CalendarPlus from "lucide-react/dist/esm/icons/calendar-plus";
 import CalendarDays from "lucide-react/dist/esm/icons/calendar-days";
+import CalendarRange from "lucide-react/dist/esm/icons/calendar-range";
 import Link2 from "lucide-react/dist/esm/icons/link-2";
 import Settings from "lucide-react/dist/esm/icons/settings";
 import LogOut from "lucide-react/dist/esm/icons/log-out";
@@ -315,6 +316,13 @@ function CalendarsMenu() {
         ))}
       </NavigationMenuPopover>
       <AnimatedReveal show={calendars.length > 0} skipInitial={!animateCalendars}>
+        <NavigationMenuLinkItem to="/dashboard/calendar" className="lg:hidden">
+          <NavigationMenuItemIcon>
+            <CalendarRange size={15} />
+          </NavigationMenuItemIcon>
+          <NavigationMenuItemLabel>Calendar</NavigationMenuItemLabel>
+          <NavigationMenuItemTrailing />
+        </NavigationMenuLinkItem>
         <NavigationMenuLinkItem to="/dashboard/events">
           <NavigationMenuItemIcon>
             <CalendarDays size={15} />
