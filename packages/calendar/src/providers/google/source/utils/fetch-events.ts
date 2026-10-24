@@ -329,17 +329,27 @@ const isAllDayGoogleEvent = (
   event: Pick<GoogleCalendarEvent, "start" | "end">,
 ): boolean => Boolean(event.start?.date || event.end?.date);
 
+/*
+ * Google marks the attendee entry for the calendar the event is listed on with `self: true`, so for a calendar
+ * read through another signed-in account it is still that calendar's owner who has (or has not) declined.
+ */
+const isDeclinedByCalendarOwner = (attendees: GoogleCalendarEvent["attendees"]): boolean =>
+  attendees?.some((attendee) => attendee.self === true && attendee.responseStatus === "declined") ?? false;
+
 const resolveSourceEventType = (
-  eventType: GoogleCalendarEvent["eventType"],
+  event: Pick<GoogleCalendarEvent, "eventType" | "attendees">,
 ): EventTimeSlot["sourceEventType"] => {
-  if (eventType === "focusTime") {
+  if (event.eventType === "focusTime") {
     return "focusTime";
   }
-  if (eventType === "outOfOffice") {
+  if (event.eventType === "outOfOffice") {
     return "outOfOffice";
   }
-  if (eventType === "workingLocation") {
+  if (event.eventType === "workingLocation") {
     return "workingLocation";
+  }
+  if (isDeclinedByCalendarOwner(event.attendees)) {
+    return "declined";
   }
   return "default";
 };
@@ -378,7 +388,7 @@ const parseGoogleEventsWithDiagnostics = (
       endTime,
       isAllDay: isAllDayGoogleEvent(event),
       location: resolveGoogleLocation(event),
-      sourceEventType: resolveSourceEventType(event.eventType),
+      sourceEventType: resolveSourceEventType(event),
       startTime,
       startTimeZone: event.start?.timeZone ?? event.end?.timeZone,
       sourceEventId: event.id,

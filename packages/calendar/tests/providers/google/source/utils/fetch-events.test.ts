@@ -346,3 +346,92 @@ describe("parseGoogleEvents", () => {
     expect(parsedEvents[0]?.availability).toBe("busy");
   });
 });
+
+describe("declined events", () => {
+  it("marks an event declined when the calendar owner declined it", () => {
+    const [parsed] = parseGoogleEvents([
+      createGoogleEvent({
+        attendees: [
+          { email: "organizer@example.com", responseStatus: "accepted" },
+          { email: "owner@example.com", responseStatus: "declined", self: true },
+        ],
+      }),
+    ]);
+
+    expect(parsed?.sourceEventType).toBe("declined");
+  });
+
+  it("ignores declines by other attendees", () => {
+    const [parsed] = parseGoogleEvents([
+      createGoogleEvent({
+        attendees: [
+          { email: "someone@example.com", responseStatus: "declined" },
+          { email: "owner@example.com", responseStatus: "accepted", self: true },
+        ],
+      }),
+    ]);
+
+    expect(parsed?.sourceEventType).toBe("default");
+  });
+
+  it("keeps events the owner accepted, left tentative or has not answered", () => {
+    for (const responseStatus of ["accepted", "tentative", "needsAction"]) {
+      const [parsed] = parseGoogleEvents([
+        createGoogleEvent({ attendees: [{ email: "owner@example.com", responseStatus, self: true }] }),
+      ]);
+
+      expect(parsed?.sourceEventType).toBe("default");
+    }
+  });
+
+  it("keeps events that have no attendees", () => {
+    const [parsed] = parseGoogleEvents([createGoogleEvent({})]);
+
+    expect(parsed?.sourceEventType).toBe("default");
+  });
+
+  it("keeps focus time, out of office and working location events typed as they are when declined", () => {
+    const declinedByOwner = [{ email: "owner@example.com", responseStatus: "declined", self: true }];
+    const parsed = parseGoogleEvents([
+      createGoogleEvent({ attendees: declinedByOwner, eventType: "focusTime", iCalUID: "uid-focus" }),
+      createGoogleEvent({ attendees: declinedByOwner, eventType: "outOfOffice", iCalUID: "uid-ooo" }),
+      createGoogleEvent({ attendees: declinedByOwner, eventType: "workingLocation", iCalUID: "uid-loc" }),
+    ]);
+
+    expect(parsed.map((event) => event.sourceEventType)).toEqual([
+      "focusTime",
+      "outOfOffice",
+      "workingLocation",
+    ]);
+  });
+
+  it("keeps the attendee entries Google returns in the events list response", async () => {
+    const requestedUrls: string[] = [];
+    globalThis.fetch = createFetchQueue(
+      [
+        createJsonResponse({
+          items: [
+            {
+              attendees: [{ email: "owner@example.com", responseStatus: "declined", self: true }],
+              iCalUID: "ext-uid-1",
+              id: "event-1",
+              status: "confirmed",
+            },
+          ],
+          nextSyncToken: "sync-token-1",
+        }),
+      ],
+      requestedUrls,
+    );
+
+    const fetchResult = await fetchCalendarEvents({
+      accessToken: "token",
+      calendarId: "calendar-id",
+      syncToken: "existing-sync-token",
+    });
+
+    expect(fetchResult.events[0]?.attendees).toEqual([
+      { email: "owner@example.com", responseStatus: "declined", self: true },
+    ]);
+  });
+});

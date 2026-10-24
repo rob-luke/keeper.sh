@@ -148,3 +148,102 @@ describe("createGoogleSourceFetcher", () => {
     });
   });
 });
+
+const resolveRequestUrl = (input: Parameters<typeof fetch>[0]): string => {
+  if (input instanceof Request) {
+    return input.url;
+  }
+  return String(input);
+};
+
+describe("declined reclassification", () => {
+  const CURRENT_SYNC_TOKEN = "current-google-token";
+  const NEXT_SYNC_TOKEN = "next-google-token";
+  const PRE_DECLINED_SYNC_TOKEN_VERSION = getOAuthSyncTokenVersion(0, new Date(), CALENDAR_ID);
+  const DECLINED_AWARE_SYNC_TOKEN_VERSION = getOAuthSyncTokenVersion(1, new Date(), CALENDAR_ID);
+
+  const recordRequestedUrls = (): string[] => {
+    const requestedUrls: string[] = [];
+    const recordingFetch = (input: Parameters<typeof fetch>[0]): Promise<Response> => {
+      requestedUrls.push(resolveRequestUrl(input));
+      return Promise.resolve(Response.json({ items: [], nextSyncToken: NEXT_SYNC_TOKEN }));
+    };
+    recordingFetch.preconnect = originalFetch.preconnect;
+    globalThis.fetch = recordingFetch;
+    return requestedUrls;
+  };
+
+  const fetchWith = (syncToken: string | null, excludesDeclined: boolean) =>
+    createGoogleSourceFetcher({
+      accessToken: "test-token",
+      calendarId: CALENDAR_ID,
+      excludesDeclined,
+      externalCalendarId: "primary",
+      plan: TEST_PLAN,
+      syncToken,
+    }).fetchEvents();
+
+  const usesStoredToken = (url: string): boolean => url.includes(`syncToken=${CURRENT_SYNC_TOKEN}`);
+
+  it("refetches the window once when a calendar excludes declined on a pre-declined token", async () => {
+    const requestedUrls = recordRequestedUrls();
+
+    const result = await fetchWith(
+      encodeStoredSyncToken(CURRENT_SYNC_TOKEN, PRE_DECLINED_SYNC_TOKEN_VERSION),
+      true,
+    );
+
+    expect(requestedUrls.some((url) => usesStoredToken(url))).toBe(false);
+    expect(result.isDeltaSync).toBe(false);
+    expect(resolveSyncTokenForWindow(
+      result.nextSyncToken ?? null,
+      DECLINED_AWARE_SYNC_TOKEN_VERSION,
+    ).syncToken).toBe(NEXT_SYNC_TOKEN);
+  });
+
+  it("keeps delta syncing on a declined-aware token however often declined is toggled", async () => {
+    const requestedUrls = recordRequestedUrls();
+    const awareToken = encodeStoredSyncToken(CURRENT_SYNC_TOKEN, DECLINED_AWARE_SYNC_TOKEN_VERSION);
+
+    await fetchWith(awareToken, true);
+    await fetchWith(awareToken, false);
+    await fetchWith(awareToken, true);
+
+    expect(requestedUrls).toHaveLength(3);
+    expect(requestedUrls.every((url) => usesStoredToken(url))).toBe(true);
+  });
+
+  it("keeps delta syncing on a pre-declined token when declined is not excluded", async () => {
+    const requestedUrls = recordRequestedUrls();
+
+    await fetchWith(encodeStoredSyncToken(CURRENT_SYNC_TOKEN, PRE_DECLINED_SYNC_TOKEN_VERSION), false);
+
+    expect(requestedUrls).toHaveLength(1);
+    expect(usesStoredToken(requestedUrls[0] ?? "")).toBe(true);
+  });
+
+  it("does not let a delta sync promote a pre-declined token", async () => {
+    recordRequestedUrls();
+
+    const result = await fetchWith(
+      encodeStoredSyncToken(CURRENT_SYNC_TOKEN, PRE_DECLINED_SYNC_TOKEN_VERSION),
+      false,
+    );
+
+    expect(resolveSyncTokenForWindow(
+      result.nextSyncToken ?? null,
+      DECLINED_AWARE_SYNC_TOKEN_VERSION,
+    ).requiresBackfill).toBe(true);
+  });
+
+  it("stamps a full sync as declined-aware", async () => {
+    recordRequestedUrls();
+
+    const result = await fetchWith(null, false);
+
+    expect(resolveSyncTokenForWindow(
+      result.nextSyncToken ?? null,
+      DECLINED_AWARE_SYNC_TOKEN_VERSION,
+    ).syncToken).toBe(NEXT_SYNC_TOKEN);
+  });
+});

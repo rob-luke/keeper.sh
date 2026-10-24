@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getDeterministicRefreshOffset,
+  getOAuthSyncTokenAdapterVersion,
   getOAuthSyncTokenVersion,
 } from "../../../src/core/oauth/sync-window";
 
@@ -34,5 +35,15 @@ describe("oauth sync token version", () => {
       new Date(fleetBoundary.getTime() + earlierOffset),
       laterCalendar,
     )).toBe(baseVersion);
+  });
+});
+
+describe("oauth sync token adapter version", () => {
+  it("reads back the adapter generation a token version was built with", () => {
+    for (const adapterVersion of [0, 1, 2, 9]) {
+      const version = getOAuthSyncTokenVersion(adapterVersion, new Date(), "calendar");
+
+      expect(getOAuthSyncTokenAdapterVersion(version)).toBe(adapterVersion);
+    }
   });
 });

@@ -157,6 +157,61 @@ describe("shouldExcludeSyncEvent", () => {
     ).toBe(false);
   });
 
+  it("excludes declined events when declined is an excluded status", () => {
+    expect(
+      shouldExcludeSyncEvent(
+        createEvent({
+          excludeAvailabilities: ["declined"],
+          sourceEventType: "declined",
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("excludes free declined events when only free is excluded", () => {
+    expect(
+      shouldExcludeSyncEvent(
+        createEvent({
+          availability: "free",
+          excludeAvailabilities: ["free"],
+          sourceEventType: "declined",
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("keeps busy declined events when only free is excluded", () => {
+    expect(
+      shouldExcludeSyncEvent(
+        createEvent({
+          excludeAvailabilities: ["free"],
+          sourceEventType: "declined",
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps declined events when only busy is excluded", () => {
+    expect(
+      shouldExcludeSyncEvent(
+        createEvent({
+          excludeAvailabilities: ["busy"],
+          sourceEventType: "declined",
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps declined events when nothing is excluded", () => {
+    expect(shouldExcludeSyncEvent(createEvent({ sourceEventType: "declined" }))).toBe(false);
+  });
+
+  it("does not treat other events as declined when declined is excluded", () => {
+    expect(
+      shouldExcludeSyncEvent(createEvent({ excludeAvailabilities: ["declined"] })),
+    ).toBe(false);
+  });
+
   it("excludes events whose title contains any of the keywords, ignoring case", () => {
     expect(
       shouldExcludeSyncEvent(

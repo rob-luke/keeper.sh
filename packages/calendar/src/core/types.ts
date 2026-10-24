@@ -5,7 +5,13 @@ import type { RefreshLockStore } from "./oauth/refresh-coordinator";
 
 type AuthType = "oauth" | "caldav" | "none";
 type EventAvailability = "busy" | "free" | "oof" | "workingElsewhere";
-type SourceEventType = "default" | "focusTime" | "outOfOffice" | "tentative" | "workingLocation";
+type SourceEventType =
+  | "default"
+  | "declined"
+  | "focusTime"
+  | "outOfOffice"
+  | "tentative"
+  | "workingLocation";
 
 interface SourcePreferenceOption {
   id: string;

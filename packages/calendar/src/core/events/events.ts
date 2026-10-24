@@ -100,7 +100,8 @@ const parseSourceEventType = (
   availability: string | null,
 ): SourceEventType => {
   if (
-    value === "focusTime"
+    value === "declined"
+    || value === "focusTime"
     || value === "outOfOffice"
     || value === "tentative"
     || value === "workingLocation"
@@ -125,10 +126,14 @@ const isExcludedAvailability = (
   availability: string | null,
 ): boolean => {
   const resolved = parseAvailability(availability) ?? "busy";
-  if (sourceEventType !== "tentative") {
+  if (sourceEventType !== "tentative" && sourceEventType !== "declined") {
     return excludeAvailabilities.includes(resolved);
   }
-  if (excludeAvailabilities.includes("tentative")) {
+  /*
+   * Tentative and declined events are stored as busy (or free), so they only match their own status;
+   * the free exclusion still applies to them like any other free event.
+   */
+  if (excludeAvailabilities.includes(sourceEventType)) {
     return true;
   }
   return resolved === "free" && excludeAvailabilities.includes("free");

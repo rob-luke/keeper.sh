@@ -2,6 +2,8 @@ import { MS_PER_DAY } from "@keeper.sh/constants";
 
 const OAUTH_SYNC_WINDOW_VERSION = 4;
 const OAUTH_SYNC_TOKEN_REFRESH_MS = 7 * MS_PER_DAY;
+/* The adapter generation is the last digit of a sync token version. */
+const OAUTH_SYNC_TOKEN_ADAPTER_VERSION_SLOTS = 10;
 
 const getDeterministicRefreshOffset = (calendarKey: string): number => {
   if (calendarKey.length === 0) {
@@ -24,8 +26,12 @@ const getOAuthSyncTokenVersion = (
   return refreshPeriod * 100 + OAUTH_SYNC_WINDOW_VERSION * 10 + adapterVersion;
 };
 
+const getOAuthSyncTokenAdapterVersion = (syncTokenVersion: number): number =>
+  syncTokenVersion % OAUTH_SYNC_TOKEN_ADAPTER_VERSION_SLOTS;
+
 export {
   OAUTH_SYNC_WINDOW_VERSION,
   getDeterministicRefreshOffset,
+  getOAuthSyncTokenAdapterVersion,
   getOAuthSyncTokenVersion,
 };

@@ -46,6 +46,7 @@ const EXCLUDABLE_AVAILABILITY_DEFINITIONS = [
   { label: "Busy", value: "busy" },
   { label: "Free", value: "free" },
   { label: "Tentative", providers: ["outlook", "ics"], value: "tentative" },
+  { label: "Declined", providers: ["google"], value: "declined" },
 ] as const;
 
 const excludableAvailabilitySchema = type.enumerated(
@@ -107,7 +108,15 @@ type CreateSource = typeof createSourceSchema.infer;
 
 const stringSchema = type("string");
 
+const googleAttendeeSchema = type({
+  "email?": "string",
+  "responseStatus?": "string",
+  "self?": "boolean",
+});
+type GoogleAttendee = typeof googleAttendeeSchema.infer;
+
 const googleEventSchema = type({
+  "attendees?": googleAttendeeSchema.array(),
   "description?": "string",
   "end?": { "date?": "string", "dateTime?": "string", "timeZone?": "string" },
   "eventType?": "string",
@@ -135,13 +144,6 @@ const googleEventListSchema = type({
   "nextSyncToken?": "string",
 });
 type GoogleEventList = typeof googleEventListSchema.infer;
-
-const googleAttendeeSchema = type({
-  "email?": "string",
-  "responseStatus?": "string",
-  "self?": "boolean",
-});
-type GoogleAttendee = typeof googleAttendeeSchema.infer;
 
 const googleEventWithAttendeesSchema = googleEventSchema.and({
   "attendees?": googleAttendeeSchema.array(),

@@ -35,6 +35,8 @@ interface GoogleCalendarEvent {
   updated?: string;
   eventType?: string;
   transparency?: string;
+  /* `self` marks the entry for the calendar this copy of the event is on (not the signed-in account). */
+  attendees?: { email?: string; responseStatus?: string; self?: boolean }[];
   workingLocationProperties?: {
     type?: string;
     customLocation?: { label?: string };
@@ -74,7 +76,7 @@ interface EventTimeSlot {
   sourceEventId?: string;
   startTime: Date;
   endTime: Date;
-  sourceEventType?: "default" | "focusTime" | "outOfOffice" | "workingLocation";
+  sourceEventType?: "default" | "declined" | "focusTime" | "outOfOffice" | "workingLocation";
   availability: "busy" | "free" | "oof" | "workingElsewhere";
   isAllDay?: boolean;
   startTimeZone?: string;

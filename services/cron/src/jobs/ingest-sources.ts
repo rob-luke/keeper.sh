@@ -743,6 +743,7 @@ const hasSourceAuthorityChanged = (
 interface OAuthFetcherParams {
   accessToken: string;
   calendarId: string;
+  excludesDeclined: boolean;
   excludesTentative: boolean;
   externalCalendarId: string;
   syncToken: string | null;
@@ -1407,6 +1408,7 @@ const ingestOAuthSources = async (
                 const fetcher = resolveOAuthFetcher(currentSource.provider, {
                   accessToken: tokenState.accessToken,
                   calendarId: source.calendarId,
+                  excludesDeclined: currentSource.excludeAvailabilities.includes("declined"),
                   excludesTentative: currentSource.excludeAvailabilities.includes("tentative"),
                   externalCalendarId: currentSource.externalCalendarId,
                   syncToken: ingestionState.syncToken,
