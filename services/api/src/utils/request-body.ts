@@ -101,6 +101,12 @@ const tokenCreateBodySchema = type({
 });
 type TokenCreateBody = typeof tokenCreateBodySchema.infer;
 
+const preferencesPatchBodySchema = type({
+  "homeTimeZone?": "string | null",
+  "+": "reject",
+});
+type PreferencesPatchBody = typeof preferencesPatchBodySchema.infer;
+
 export {
   calendarIdsBodySchema,
   calendarPausePatchBodySchema,
@@ -110,6 +116,7 @@ export {
   icalFeedPatchBodySchema,
   eventCreateBodySchema,
   eventPatchBodySchema,
+  preferencesPatchBodySchema,
   tokenCreateBodySchema,
 };
 export type {
@@ -121,5 +128,6 @@ export type {
   IcalFeedPatchBody,
   EventCreateBody,
   EventPatchBody,
+  PreferencesPatchBody,
   TokenCreateBody,
 };

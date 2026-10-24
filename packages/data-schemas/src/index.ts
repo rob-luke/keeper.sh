@@ -1,4 +1,5 @@
 import { type } from "arktype";
+import { isValidTimeZone, normalizeTimeZone } from "./time-zone";
 
 const proxyableMethods = type("'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD' | 'OPTIONS'");
 
@@ -597,6 +598,8 @@ export {
   MAX_EXCLUDE_TITLE_KEYWORDS,
   MAX_EXCLUDE_TITLE_KEYWORD_LENGTH,
   canExcludeAvailability,
+  isValidTimeZone,
+  normalizeTimeZone,
   excludableAvailabilitySchema,
   excludeTitleKeywordsSchema,
   getExcludableAvailabilities,

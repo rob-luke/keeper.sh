@@ -44,6 +44,7 @@ import {
   fetchAuthCapabilitiesWithApi,
   resolveOidcProviderName,
 } from "@/lib/auth-capabilities";
+import { HomeTimeZoneItem } from "@/features/dashboard/components/home-time-zone-item";
 
 export const Route = createFileRoute("/(dashboard)/dashboard/settings/")({
   loader: async ({ context }) => {
@@ -120,6 +121,9 @@ function SettingsPage() {
             <Text size="sm" tone="muted" className="truncate">{accountValue}</Text>
           </NavigationMenuItemTrailing>
         </NavigationMenuItem>
+      </NavigationMenu>
+      <NavigationMenu>
+        <HomeTimeZoneItem />
       </NavigationMenu>
       <NavigationMenu>
         {hasPassword && (

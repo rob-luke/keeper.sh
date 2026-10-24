@@ -346,6 +346,22 @@ const userSubscriptionsTable = pgTable("user_subscriptions", {
     .references(() => user.id, { onDelete: "cascade" }),
 });
 
+/*
+ * Per-user settings that apply across calendars. `homeTimeZone` is the IANA zone that hour-based
+ * settings (such as a calendar's sync hours) are read in; null means the user has not chosen one.
+ */
+const userPreferencesTable = pgTable("user_preferences", {
+  homeTimeZone: text(),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+  userId: text()
+    .notNull()
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
 const syncStatusTable = pgTable(
   "sync_status",
   {
@@ -561,5 +577,6 @@ export {
   syncStatusTable,
   userSyncRequestsTable,
   userEventsTable,
+  userPreferencesTable,
   userSubscriptionsTable,
 };

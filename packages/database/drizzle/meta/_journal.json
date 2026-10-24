@@ -694,6 +694,13 @@
       "when": 1791922782826,
       "tag": "0098_add_calendar_and_event_colors",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1792830228854,
+      "tag": "0099_add_user_preferences",
+      "breakpoints": true
     }
   ]
 }
