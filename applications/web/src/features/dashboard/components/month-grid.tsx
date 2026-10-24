@@ -334,6 +334,7 @@ export function MonthGrid({
 
   return (
     <CalendarFrame
+      bare={compact}
       toolbar={toolbar}
       columnHeader={
         <div className="grid grid-cols-7">

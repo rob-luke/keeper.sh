@@ -6,6 +6,8 @@ import {
   DAYS_PER_WEEK,
   getMonthFetchRange,
   getMonthViewFocusDay,
+  formatCompactDayTitle,
+  formatCompactMonthTitle,
   formatWeekTitle,
   getWeekFetchRange,
   isSameMonth,
@@ -52,6 +54,15 @@ describe("getWeekFetchRange", () => {
 });
 
 // Two years of months cover daylight-saving changes and a year boundary.
+describe("compact titles", () => {
+  it("leaves the year off day views and keeps it on a month", () => {
+    expect(formatCompactDayTitle(new Date(2026, 9, 24), THREE_DAY_VIEW_DAYS)).toBe("Oct 23–25");
+    expect(formatCompactDayTitle(new Date(2026, 9, 31), THREE_DAY_VIEW_DAYS)).toBe("Oct 30 – Nov 1");
+    expect(formatCompactDayTitle(new Date(2026, 9, 24), ONE_DAY_VIEW_DAYS)).toBe("Sat, Oct 24");
+    expect(formatCompactMonthTitle(new Date(2026, 9, 24))).toBe("Oct 2026");
+  });
+});
+
 describe("one-day view", () => {
   it("shows just the anchor day and titles it as one date", () => {
     const anchor = new Date(2026, 7, 22, 15, 30);

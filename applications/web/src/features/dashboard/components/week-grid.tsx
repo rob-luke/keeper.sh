@@ -47,6 +47,7 @@ import {
 import { useStripRealign } from "./use-strip-realign";
 
 const GUTTER_WIDTH = 52;
+const COMPACT_GUTTER_WIDTH = 44;
 const HEADER_HEIGHT = 64;
 const ALL_DAY_MAX_ROWS = 2;
 const ALL_DAY_BAND_PADDING_BOTTOM = 4;
@@ -92,6 +93,30 @@ interface DayHeaderCellProps {
   timedCount: number;
   allDay: CalendarEvent[];
   bandRows: number;
+  /** One all-day row: the first pill with a "+N" beside it, instead of a "+N more" line. */
+  compact: boolean;
+}
+
+function CompactAllDayBand({ allDay, height }: { allDay: CalendarEvent[]; height: number }) {
+  const [first] = allDay;
+  return (
+    <div className="flex items-start gap-0.5 overflow-clip px-0.5" style={{ height }}>
+      <div className="min-w-0 flex-1">
+        <EventPill event={first} past={isEventPast(first.endTime)} />
+      </div>
+      {allDay.length > 1 && (
+        <Text
+          as="span"
+          size="xs"
+          tone="muted"
+          className="flex shrink-0 items-center px-0.5"
+          style={{ height: EVENT_PILL_HEIGHT_PX }}
+        >
+          +{allDay.length - 1}
+        </Text>
+      )}
+    </div>
+  );
 }
 
 const DayHeaderCell = memo(function DayHeaderCell({
@@ -100,6 +125,7 @@ const DayHeaderCell = memo(function DayHeaderCell({
   timedCount,
   allDay,
   bandRows,
+  compact,
 }: DayHeaderCellProps) {
   const { visibleCount, hiddenCount } = resolveVisiblePillCount(allDay.length, bandRows);
   const bandHeight = resolveBandHeight(bandRows);
@@ -148,15 +174,18 @@ const DayHeaderCell = memo(function DayHeaderCell({
           </span>
           <DayDensityPips count={timedCount} period={period} />
         </div>
-        <div
-          className="flex flex-col overflow-clip px-0.5 transition-[height] duration-200 motion-reduce:transition-none"
-          style={{ height: bandHeight, gap: EVENT_PILL_GAP_PX }}
-        >
-          {allDay.slice(0, visibleCount).map((event) => (
-            <EventPill key={event.id} event={event} past={isEventPast(event.endTime)} />
-          ))}
-          {hiddenCount > 0 && <EventPillOverflow count={hiddenCount} />}
-        </div>
+        {compact && allDay.length > 0 && <CompactAllDayBand allDay={allDay} height={bandHeight} />}
+        {!compact && (
+          <div
+            className="flex flex-col overflow-clip px-0.5 transition-[height] duration-200 motion-reduce:transition-none"
+            style={{ height: bandHeight, gap: EVENT_PILL_GAP_PX }}
+          >
+            {allDay.slice(0, visibleCount).map((event) => (
+              <EventPill key={event.id} event={event} past={isEventPast(event.endTime)} />
+            ))}
+            {hiddenCount > 0 && <EventPillOverflow count={hiddenCount} />}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -170,9 +199,19 @@ interface WeekGridProps {
   toolbar: ReactNode;
   /** Day columns shown at once. The strip is built for one count, so change it with a `key`. */
   days: number;
+  /** Phone layout: edge to edge, a narrower hour gutter and a single all-day row. */
+  compact?: boolean;
 }
 
-export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days }: WeekGridProps) {
+export function WeekGrid({
+  anchor,
+  eventsByDay,
+  onCenterDayChange,
+  toolbar,
+  days,
+  compact = false,
+}: WeekGridProps) {
+  const gutterWidth = compact ? COMPACT_GUTTER_WIDTH : GUTTER_WIDTH;
   const visibleColumns = days;
   const centerOffset = Math.floor(visibleColumns / 2);
   const today = useStartOfToday();
@@ -220,8 +259,8 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days
   const columnWidth = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return 1;
-    return Math.max((el.clientWidth - GUTTER_WIDTH) / visibleColumns, 1);
-  }, [visibleColumns]);
+    return Math.max((el.clientWidth - gutterWidth) / visibleColumns, 1);
+  }, [visibleColumns, gutterWidth]);
 
   const scrollToCenter = useCallback(
     (centerDay: Date, behavior: ScrollBehavior) => {
@@ -331,7 +370,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days
       anchor: rect,
       frame: {
         top: frameRect.top,
-        left: frameRect.left + GUTTER_WIDTH,
+        left: frameRect.left + gutterWidth,
         right: frameRect.right,
         bottom: frameRect.bottom,
       },
@@ -374,11 +413,11 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days
     const allDayCount = eventsByDay.get(addDays(visibleStart, index).getTime())?.allDay.length ?? 0;
     mostAllDay = Math.max(mostAllDay, allDayCount);
   }
-  const bandRows = Math.min(mostAllDay, ALL_DAY_MAX_ROWS);
+  const bandRows = Math.min(mostAllDay, compact ? 1 : ALL_DAY_MAX_ROWS);
 
   const dayRow = (
     <div className="flex">
-      <div className="shrink-0" style={{ width: GUTTER_WIDTH }} />
+      <div className="shrink-0" style={{ width: gutterWidth }} />
       <div className="relative min-w-0 flex-1 overflow-x-clip">
         <div
           ref={rowRef}
@@ -397,6 +436,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days
               timedCount={eventsByDay.get(day.getTime())?.timed.length ?? 0}
               allDay={eventsByDay.get(day.getTime())?.allDay ?? NO_EVENTS}
               bandRows={bandRows}
+              compact={compact}
             />
           ))}
         </div>
@@ -406,6 +446,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days
 
   return (
     <CalendarFrame
+      bare={compact}
       toolbar={toolbar}
       columnHeader={dayRow}
       gridMaxHeight={HOUR_HEIGHT * HOURS.length}
@@ -415,11 +456,11 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days
         ref={scrollerRef}
         onScroll={handleScroll}
         className="flex min-h-0 flex-1 items-start snap-x snap-mandatory overflow-auto overscroll-x-none mask-b-from-[calc(100%-24px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        style={{ scrollPaddingLeft: GUTTER_WIDTH }}
+        style={{ scrollPaddingLeft: gutterWidth }}
       >
         <div
           className="sticky left-0 z-30 shrink-0 bg-background"
-          style={{ width: GUTTER_WIDTH, height: HOUR_HEIGHT * HOURS.length }}
+          style={{ width: gutterWidth, height: HOUR_HEIGHT * HOURS.length }}
         >
           {HOURS.slice(1).map((hour) => (
             <span
@@ -440,7 +481,7 @@ export function WeekGrid({ anchor, eventsByDay, onCenterDayChange, toolbar, days
           className="relative grid shrink-0"
           style={{
             gridTemplateColumns: columnsTemplate,
-            width: `calc(${stripDays.length} * (100% - ${GUTTER_WIDTH}px) / ${visibleColumns})`,
+            width: `calc(${stripDays.length} * (100% - ${gutterWidth}px) / ${visibleColumns})`,
             height: HOUR_HEIGHT * HOURS.length,
           }}
         >

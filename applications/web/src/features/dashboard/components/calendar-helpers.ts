@@ -101,6 +101,25 @@ export function formatWeekTitle(anchor: Date, days = WEEK_VIEW_DAYS): string {
   return `${startMonth} ${start.getDate()}, ${start.getFullYear()} – ${endMonth} ${end.getDate()}, ${end.getFullYear()}`;
 }
 
+/** Short title for a phone toolbar: no year on day views, "Oct 2026" for a month. */
+export function formatCompactDayTitle(anchor: Date, days: number): string {
+  const start = startOfVisibleWeek(anchor, days);
+  if (days === 1) {
+    return start.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  }
+  const end = addDays(start, days - 1);
+  const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+  if (isSameMonth(start, end)) {
+    return `${startMonth} ${start.getDate()}–${end.getDate()}`;
+  }
+  const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+  return `${startMonth} ${start.getDate()} – ${endMonth} ${end.getDate()}`;
+}
+
+export function formatCompactMonthTitle(anchor: Date): string {
+  return anchor.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
 const FETCH_WEEKS_BEFORE = 1;
 const FETCH_WEEKS = 4;
 

@@ -5,6 +5,8 @@ import { calendarJumpAtom } from "@/state/event-graph-hover";
 import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
 import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 import { cn } from "@/utils/cn";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import { BackButton } from "@/components/ui/primitives/back-button";
 import { Text } from "@/components/ui/primitives/text";
 import { useEventsInRange } from "@/hooks/use-events";
 import { MonthGrid } from "./month-grid";
@@ -13,6 +15,8 @@ import { bucketEventsByDay } from "./event-layout";
 import {
   addDays,
   addMonthsClamped,
+  formatCompactDayTitle,
+  formatCompactMonthTitle,
   formatMonthTitle,
   formatWeekTitle,
   getMonthFetchRange,
@@ -42,6 +46,11 @@ const dayViewColumns = (view: CalendarViewMode): number => {
 const resolveFetchRange = (view: CalendarViewMode, anchor: Date) => {
   if (view === "month") return getMonthFetchRange(anchor);
   return getWeekFetchRange(anchor, dayViewColumns(view));
+};
+
+const resolveCompactTitle = (view: CalendarViewMode, anchor: Date): string => {
+  if (view === "month") return formatCompactMonthTitle(anchor);
+  return formatCompactDayTitle(anchor, dayViewColumns(view));
 };
 
 const navButton =
@@ -86,6 +95,7 @@ export function CalendarView({
     [events, fetchStartMs, fetchEndMs],
   );
 
+  const compactTitle = resolveCompactTitle(view, anchor);
   const title = view === "month" ? formatMonthTitle(anchor) : formatWeekTitle(anchor, columns);
 
   const switchView = (mode: CalendarViewMode) => {
@@ -112,6 +122,50 @@ export function CalendarView({
     setAnchor(day);
     setView("1day");
   };
+
+  const viewMenu = (
+    <label className="relative flex shrink-0 items-center">
+      <span className="sr-only">Calendar view</span>
+      <select
+        value={view}
+        onChange={(event) => {
+          const next = views.find((mode) => mode === event.target.value);
+          if (next) switchView(next);
+        }}
+        className="appearance-none rounded-lg bg-background-hover py-1.5 pr-7 pl-2.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {views.map((mode) => (
+          <option key={mode} value={mode}>
+            {VIEW_LABELS[mode]}
+          </option>
+        ))}
+      </select>
+      <ChevronDown size={14} className="pointer-events-none absolute right-2 text-foreground-muted" />
+    </label>
+  );
+
+  const compactToolbar = (
+    <div className="flex w-full items-center gap-1.5">
+      <BackButton className="aspect-square shrink-0" />
+      <Text as="span" size="base" tone="default" className="min-w-0 flex-1 truncate font-medium">
+        {compactTitle}
+      </Text>
+      <button
+        type="button"
+        className="shrink-0 rounded-lg px-2 py-1.5 text-sm font-medium text-foreground-muted hover:bg-background-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => setAnchor(new Date())}
+      >
+        Today
+      </button>
+      <button type="button" aria-label="Previous" className={cn(navButton, "shrink-0")} onClick={() => step(-1)}>
+        <ChevronLeft size={16} />
+      </button>
+      <button type="button" aria-label="Next" className={cn(navButton, "shrink-0")} onClick={() => step(1)}>
+        <ChevronRight size={16} />
+      </button>
+      {viewMenu}
+    </div>
+  );
 
   const toolbar = (
     <>
@@ -160,12 +214,14 @@ export function CalendarView({
     </>
   );
 
+  const activeToolbar = compact ? compactToolbar : toolbar;
+
   return view === "month" ? (
     <MonthGrid
       anchor={anchor}
       eventsByDay={eventsByDay}
       onAnchorChange={setAnchor}
-      toolbar={toolbar}
+      toolbar={activeToolbar}
       compact={compact}
       onDayClick={openDay}
     />
@@ -176,7 +232,8 @@ export function CalendarView({
       anchor={anchor}
       eventsByDay={eventsByDay}
       onCenterDayChange={setAnchor}
-      toolbar={toolbar}
+      toolbar={activeToolbar}
+      compact={compact}
     />
   );
 }
